@@ -1,2 +1,2 @@
 import {defineConfig} from 'vite';
-export default defineConfig({plugins:[{name:'cms-script',transformIndexHtml(){return [{tag:'script',attrs:{type:'module',src:'/cms.js'},injectTo:'body'},{tag:'style',children:'.grid .image{aspect-ratio:1 / 1}',injectTo:'head'}];}}]});
+export default defineConfig({plugins:[{name:'cms-script',transformIndexHtml(){return [{tag:'script',attrs:{type:'module',src:'/cms.js'},injectTo:'body'},{tag:'style',children:'.grid .image{aspect-ratio:1 / 1}.grid .card .image.has-photo{background:#fff}.grid .image img{object-fit:contain;object-position:center}.grid .card:hover .image img{transform:none}',injectTo:'head'}];}}]});

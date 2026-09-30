@@ -1,18 +1,20 @@
 const grid=document.querySelector('.grid');
 const note=document.querySelector('.note');
-const query='*[_type == "work" && !(_id in path("drafts.**")) && hidden != true] | order(sortOrder desc, date desc){title,date,kind,videoUrl,instagramUrl,"imageUrl":image.asset->url}';
+const query='*[_type == "work" && !(_id in path("drafts.**")) && hidden != true] | order(sortOrder desc, date desc){_id,title,sortOrder,date,kind,videoUrl,instagramUrl,"imageUrl":image.asset->url}';
+function rank(work){const value=work.sortOrder;if(value===null||value===undefined||value==='')return -Infinity;const n=Number(value);return Number.isFinite(n)?n:-Infinity;}
 async function loadWorks(){
  try{
- const res=await fetch('https://laqdtwki.api.sanity.io/v2026-09-30/data/query/production?query='+encodeURIComponent(query),{credentials:'omit'});
+ const res=await fetch('https://laqdtwki.api.sanity.io/v2026-09-30/data/query/production?query='+encodeURIComponent(query),{credentials:'omit',cache:'no-store'});
  if(!res.ok)throw new Error('CMS '+res.status);
  const data=await res.json();if(!Array.isArray(data.result))throw new Error('Invalid response');
+ const works=data.result.sort((a,b)=>{const x=rank(a),y=rank(b);if(x!==y)return x>y?-1:1;return String(b.date||'').localeCompare(String(a.date||''))||String(a._id).localeCompare(String(b._id));});
  grid.replaceChildren();
- if(!data.result.length){note.textContent='작품을 준비하고 있습니다.';return;}
- const style=document.createElement('style');style.textContent='.image.has-photo:before,.image.has-photo:after{display:none}.image img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 1.2s}.card:hover .image img{transform:scale(1.06)}.card .work-link{display:block;border:0;padding:0;letter-spacing:normal}.card .work-link:focus-visible{outline:2px solid #526c49;outline-offset:6px}@media(prefers-reduced-motion:reduce){.image img{transition:none}}';document.head.append(style);
- for(const work of data.result){
- const card=document.createElement('article');card.className='card';
+ if(!works.length){note.textContent='작품을 준비하고 있습니다.';return;}
+ const style=document.createElement('style');style.textContent='.image.has-photo:before,.image.has-photo:after{display:none}.grid .image{aspect-ratio:1/1}.grid .image.has-photo{background:#fff}.grid .image img{width:100%;height:100%;object-fit:contain;object-position:center;display:block}.grid .card:hover .image img{transform:none}.card .work-link{display:block;border:0;padding:0;letter-spacing:normal}.card .work-link:focus-visible{outline:2px solid #526c49;outline-offset:6px}';document.head.append(style);
+ for(const work of works){
+ const card=document.createElement('article');card.className='card';card.dataset.sortOrder=work.sortOrder??'';
  const image=document.createElement('div');image.className='image';
- if(work.imageUrl){const url=new URL(work.imageUrl);if(url.protocol==='https:'&&url.hostname==='cdn.sanity.io'){image.classList.add('has-photo');const img=document.createElement('img');img.src=url.href+'?w=1000&auto=format&fit=max';img.alt=work.title||'작품';img.loading='lazy';image.append(img);}}
+ if(work.imageUrl){try{const url=new URL(work.imageUrl);if(url.protocol==='https:'&&url.hostname==='cdn.sanity.io'){image.classList.add('has-photo');const img=document.createElement('img');img.src=url.href+'?w=1000&auto=format&fit=max';img.alt=work.title||'작품';img.loading='lazy';image.append(img);}}catch{}}
  let container=card;
  const isVideo=work.kind==='video';
  const destination=isVideo?work.videoUrl:work.instagramUrl;

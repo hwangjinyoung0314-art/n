@@ -1,7 +1,14 @@
 const grid=document.querySelector('.grid');
 const note=document.querySelector('.note');
-const query='*[_type == "work" && !(_id in path("drafts.**")) && hidden != true] | order(sortOrder desc, date desc){_id,title,sortOrder,date,kind,videoUrl,instagramUrl,"imageUrl":image.asset->url}';
+const query='*[_type == "work" && !(_id in path("drafts.**")) && hidden != true] | order(sortOrder desc, date desc){_id,title,sortOrder,date,kind,videoUrl,instagramUrl,externalUrl,"imageUrl":image.asset->url}';
 function rank(work){const value=work.sortOrder;if(value===null||value===undefined||value==='')return -Infinity;const n=Number(value);return Number.isFinite(n)?n:-Infinity;}
+function workLink(work){
+ if(work.externalUrl){try{const u=new URL(work.externalUrl);if(['https:','http:'].includes(u.protocol)&&!u.username&&!u.password)return {url:u.href,label:'외부 링크'};}catch{}}
+ const video=work.kind==='video';const destination=video?work.videoUrl:work.kind==='photo'?work.instagramUrl:null;
+ const allowed=video?['youtube.com','www.youtube.com','youtu.be','m.youtube.com']:['instagram.com','www.instagram.com'];
+ if(destination){try{const u=new URL(destination);if(u.protocol==='https:'&&allowed.includes(u.hostname))return {url:u.href,label:video?'유튜브':'인스타그램'};}catch{}}
+ return null;
+}
 async function loadWorks(){
  try{
  const res=await fetch('https://laqdtwki.api.sanity.io/v2026-09-30/data/query/production?query='+encodeURIComponent(query),{credentials:'omit',cache:'no-store'});
@@ -15,11 +22,8 @@ async function loadWorks(){
  const card=document.createElement('article');card.className='card';card.dataset.sortOrder=work.sortOrder??'';
  const image=document.createElement('div');image.className='image';
  if(work.imageUrl){try{const url=new URL(work.imageUrl);if(url.protocol==='https:'&&url.hostname==='cdn.sanity.io'){image.classList.add('has-photo');const img=document.createElement('img');img.src=url.href+'?w=1000&auto=format&fit=max';img.alt=work.title||'작품';img.loading='lazy';image.append(img);}}catch{}}
- let container=card;
- const isVideo=work.kind==='video';
- const destination=isVideo?work.videoUrl:work.instagramUrl;
- const allowed=isVideo?['youtube.com','www.youtube.com','youtu.be','m.youtube.com']:['instagram.com','www.instagram.com'];
- if(destination){try{const u=new URL(destination);if(u.protocol==='https:'&&allowed.includes(u.hostname)){const a=document.createElement('a');a.className='work-link';a.href=u.href;a.target='_blank';a.rel='noopener noreferrer';a.setAttribute('aria-label',(work.title||'작품')+' — '+(isVideo?'유튜브':'인스타그램')+'에서 보기 (새 탭)');card.append(a);container=a;}}catch{}}
+ let container=card;const destination=workLink(work);
+ if(destination){const a=document.createElement('a');a.className='work-link';a.href=destination.url;a.target='_blank';a.rel='noopener noreferrer';a.setAttribute('aria-label',(work.title||'작품')+' — '+destination.label+'에서 보기 (새 탭)');card.append(a);container=a;}
  container.append(image);const meta=document.createElement('div');meta.className='meta';const title=document.createElement('h2');title.textContent=work.title||'제목 없음';const date=document.createElement('time');if(work.date){date.dateTime=work.date;date.textContent=work.date.slice(0,7).replace('-','.');}meta.append(title,date);container.append(meta);grid.append(card);
  }
  note.textContent='';

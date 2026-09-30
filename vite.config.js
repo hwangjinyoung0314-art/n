@@ -1,2 +1,2 @@
 import {defineConfig} from 'vite';
-export default defineConfig({plugins:[{name:'cms-script',transformIndexHtml(){return [{tag:'script',attrs:{type:'module',src:'/cms.js'},injectTo:'body'}];}}]});
+export default defineConfig({plugins:[{name:'cms-script',transformIndexHtml(){return [{tag:'script',attrs:{type:'module',src:'/cms.js'},injectTo:'body'},{tag:'style',children:'.grid .image{aspect-ratio:1 / 1}',injectTo:'head'}];}}]});

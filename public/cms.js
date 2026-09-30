@@ -1,6 +1,6 @@
 const grid=document.querySelector('.grid');
 const note=document.querySelector('.note');
-const query='*[_type == "work" && !(_id in path("drafts.**")) && hidden != true] | order(sortOrder asc, date desc){title,date,kind,videoUrl,instagramUrl,"imageUrl":image.asset->url}';
+const query='*[_type == "work" && !(_id in path("drafts.**")) && hidden != true] | order(sortOrder desc, date desc){title,date,kind,videoUrl,instagramUrl,"imageUrl":image.asset->url}';
 async function loadWorks(){
  try{
  const res=await fetch('https://laqdtwki.api.sanity.io/v2026-09-30/data/query/production?query='+encodeURIComponent(query),{credentials:'omit'});
